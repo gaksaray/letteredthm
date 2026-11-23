@@ -1,0 +1,119 @@
+%%
+%% This is file `letteredthm.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% letteredthm.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2026 by Gorkem Aksaray <aksarayg@tcd.ie>
+%% 
+%% This file may be distributed and/or modified under the conditions of
+%% the LaTeX Project Public License, either version 1.3c of this license
+%% or (at your option) any later version. The latest version of this
+%% license is in:
+%% 
+%% https://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3c or later is part of all distributions of LaTeX
+%% version 2008 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}[2021-11-15]
+\ProvidesExplPackage{letteredthm}{2026-11-23}{1.0.0}
+  {Lettered sub-numbering for theorem-like environments}
+\skip_new:N \l__lthm_skip
+\clist_new:N \g__lthm_envs_clist
+\NewDocumentCommand \NewLetteredTheorem { m m m m }
+  {
+    \newtheorem {#1} {#3}
+    \newtheorem {sub#1} {#3} [#1]
+    \cs_set:cpn { thesub#1 } { \use:c { the#1 } \alph { sub#1 } }
+    \bool_new:c { g__lthm_#1_group_bool }
+    \bool_new:c { g__lthm_#1_pending_bool }
+    \tl_new:c { g__lthm_#1_label_tl }
+    \cs_new_eq:cc { __lthm_#1_plain: } {#1}
+    \cs_new_eq:cc { __lthm_#1_endplain: } { end#1 }
+    \cs_set_protected:cpn {#1}
+      {
+        \bool_if:cTF { g__lthm_#1_group_bool }
+          { \__lthm_open_group:n {#1} \use:c { sub#1 } }
+          { \use:c { __lthm_#1_plain: } }
+      }
+    \cs_set_protected:cpn { end#1 }
+      {
+        \bool_if:cTF { g__lthm_#1_group_bool }
+          { \use:c { endsub#1 } }
+          { \use:c { __lthm_#1_endplain: } }
+      }
+    \exp_args:Nc \NewDocumentCommand { start#2 } { O{} }
+      {
+        \__lthm_check_unused:n {#1}
+        \bool_gset_true:c { g__lthm_#1_group_bool }
+        \bool_gset_true:c { g__lthm_#1_pending_bool }
+        \tl_gset:cn { g__lthm_#1_label_tl } {##1}
+      }
+    \exp_args:Nc \NewDocumentCommand { stop#2 } { }
+      {
+        \__lthm_check_unused:n {#1}
+        \bool_gset_false:c { g__lthm_#1_group_bool }
+        \bool_gset_false:c { g__lthm_#1_pending_bool }
+      }
+    \tl_const:cn { c__lthm_parent_sub#1_tl } {#1}
+    \clist_gput_right:Nn \g__lthm_envs_clist { {#1} {#3} {#4} }
+  }
+\cs_new_protected:Npn \__lthm_open_group:n #1
+  {
+    \bool_if:cT { g__lthm_#1_pending_bool }
+      {
+        \bool_gset_false:c { g__lthm_#1_pending_bool }
+        \mode_if_horizontal:T { \unskip \unskip \par }
+        \skip_set:Nn \l__lthm_skip { \tex_lastskip:D }
+        \skip_if_eq:nnF { \l__lthm_skip } { \c_zero_skip }
+          { \skip_vertical:n { - \l__lthm_skip } }
+        \refstepcounter {#1}
+        \tl_if_empty:cF { g__lthm_#1_label_tl }
+          { \exp_args:Nv \label { g__lthm_#1_label_tl } }
+        \legacy_if:nT { @nobreak } { \nobreak }
+        \skip_if_eq:nnF { \l__lthm_skip } { \c_zero_skip }
+          { \skip_vertical:N \l__lthm_skip }
+      }
+  }
+\cs_new_protected:Npn \__lthm_check_unused:n #1
+  {
+    \bool_lazy_and:nnT
+      { \bool_if_p:c { g__lthm_#1_pending_bool } }
+      { ! \tl_if_empty_p:c { g__lthm_#1_label_tl } }
+      {
+        \exp_args:Nnnv \msg_warning:nnn { letteredthm } { unused-label }
+          { g__lthm_#1_label_tl }
+      }
+  }
+\msg_new:nnn { letteredthm } { unused-label }
+  { Group~label~`#1'~is~undefined:~its~group~has~no~statements. }
+\AddToHook { begindocument / before }
+  { \IfPackageLoadedTF { cleveref } { \__lthm_cref_setup: } { } }
+\cs_new_protected:Npn \__lthm_cref_setup:
+  {
+    \clist_map_function:NN \g__lthm_envs_clist \__lthm_cref_names:n
+    \cs_set_eq:Nc \__lthm_cref_resetby:nN { cref@resetby }
+    \cs_set:cpn { cref@resetby } ##1##2
+      {
+        \__lthm_cref_resetby:nN {##1} ##2
+        \tl_if_exist:cT { c__lthm_parent_##1_tl }
+          { \tl_set_eq:Nc ##2 { c__lthm_parent_##1_tl } }
+      }
+  }
+\cs_new_protected:Npn \__lthm_cref_names:n #1
+  { \__lthm_cref_names:nnn #1 }
+\cs_new_protected:Npn \__lthm_cref_names:nnn #1#2#3
+  {
+    \cs_if_exist:cF { Cref@#1@name } { \Crefname {#1} {#2} {#3} }
+    \cs_if_exist:cF { cref@#1@name }
+      { \crefname {#1} { \MakeLowercase {#2} } { \MakeLowercase {#3} } }
+    \crefalias { sub#1 } {#1}
+  }
+\endinput
+%%
+%% End of file `letteredthm.sty'.
